@@ -1,7 +1,156 @@
-# Insert chapter 2 title here
+# Regression and model validation
 
 *Describe the work you have done this week and summarize your learning.*
 
 - Describe your work and results clearly. 
 - Assume the reader has an introductory course level understanding of writing and reading R code as well as statistical methods
 - Assume the reader has no previous knowledge of your data or the more advanced methods you are using  
+
+- First, I was reading dataset into R:
+
+```{r}
+students2014 <- read.csv("learning2014.csv", header = T , sep = "," )
+```
+
+The dataset is based on the students' survey. The questions are grouped in 3 groups by questions' topics:
+
+1) questions related to deep learning
+
+2) questions related to surface learning
+
+3) questions related to strategic learning
+
+In addition, there are factor variables as age, gender. Also, "points" (exam points) and "attitude" (global attitude towards statistics) variables.
+
+Combinational variables (deep, surface and strategic learning questions) are scaled back to the original scales by taking mean. Overall we have 166 observations witj 7 variables.
+
+- Next I am showing graphical overwiev of the data and summaries of the variables:
+
+```{r}
+summary(students2014$deep)
+```
+```{r}
+summary(students2014$stra)
+```
+
+```{r}
+summary(students2014$surf)
+```
+
+```{r}
+summary(students2014$Points)
+```
+```{r}
+summary(students2014$gender)
+```
+We can see that the major part of the students were women.
+
+```{r}
+summary(students2014$Age)
+```
+The maximun age was 55, the minimum 17, the median 22 and the mean 25.51 years.
+
+```{r}
+plot(students2014$Age,students2014$deep)
+```
+
+The mean of the deep group questions was 3.68. From the deep questions we can see the students' motivation of understanding "deep" meaning of their studies. For example, "D03: I usually set out to understand for myself the meaning of what we have to learn." So we can see that the motivation for deep understanding is average. 
+```{r}
+plot(students2014$Age, students2014$stra)
+```
+Strategic questions were related to strategic studying motivation. For an example, "ST09: I think I'm quite systematic and organised when it comes to revising for exams." The mean of the strategic questions is 3.121. It is a bit lower than of deep questions group but still average.
+
+
+```{r}
+plot(students2014$Age, students2014$surf)
+```
+The questions related to surface learning group has mean of 2.787 but the direction of scale is opposite, it has negative direction. An exaple of a question "SU10: There's not much of the work here that I find interesting or relevant.". So the low mean is actually good thing and students were interested in the course and it was helpful.
+
+
+From the 3 plots above we can see that the major part of the students were from the age group 20-30. 
+
+```{r}
+plot(students2014$gender,students2014$deep)
+```
+
+```{r}
+plot(students2014$Age, students2014$Points)
+```
+
+- I have chosen as as a explanatory variable "Attitude"-variable with exam points as the target (dependent) variable.
+
+I am using the package "ggplot2":
+```{r}
+library(ggplot2)
+```
+
+Initializing plot with data and aesthetic mapping:
+```{r}
+p1 <- ggplot(students2014, aes(x = Attitude, y = Points, col = gender))
+```
+
+
+Defining the visualization type (points):
+```{r}
+p2 <- p1 + geom_point() 
+```
+
+Drawing the plot:
+```{r}
+p2
+
+```
+
+
+Adding a regression line:
+```{r}
+p3 <- p2 + geom_smooth(method = "lm")
+```
+
+
+Adding a main title and drawing the plot:
+```{r}
+p4 <- p3 + ggtitle("Students' attitude versus exam points")
+p4
+ggsave("Students_attitude_VS_exam_points.png", width = 5, height = 5)
+```
+
+Regression analysis:
+```{r}
+model <- lm(Points ~ Attitude + stra + surf, data = students2014)
+
+summary(model)
+```
+
+
+From the plot we can see correlation only between "attitude" and "exam points". From regression analysis we can see that:
+- There is some correlation between attitude and exam points. P-value is very low, even though the estimate for attitude is just 0.35.
+- The correlation between strategic questions and points is weaker, p-value is higher.
+- The correlation between "surface questions" and "exam points" is negative and the p-value is high and not significantly different from zero.
+--> The most significant is "Attitude".
+
+Let remove "surf" variable:
+
+```{r}
+model2 <- lm(Points ~ Attitude + stra, data = students2014)
+summary(model2)
+```
+
+Now the p-value of "stra" improved a little bit.
+I add the "Age"-variable to compare the results.
+
+```{r}
+model3 <- lm(Points ~ Attitude + stra + Age, data = students2014)
+summary(model3)
+```
+
+We can see that there is a relation between "exam points" and "Age" variables even if not very significant. The most explanatory variable is still "Attitude".
+
+Now we can make Residual vs Fitted values, Normal QQ-plot and Residual vs Leverage analysis.
+
+```{r}
+plot(model3,which = c(1,2,5),par(mfrow = c(2,2)))
+```
+
+
+
